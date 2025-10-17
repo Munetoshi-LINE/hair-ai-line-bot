@@ -6,9 +6,9 @@ const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
 
+
 // ✅ Node.js v18未満対策：fetchを動作保証
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
-
 // ===== 環境変数 =====
 const {
   LINE_CHANNEL_ACCESS_TOKEN,
