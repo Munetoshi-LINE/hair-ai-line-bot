@@ -122,7 +122,7 @@ async function getImageBuffer(messageId) {
   return Buffer.concat(chunks);
 }
 
-// ===== Gemini 画像合成呼び出し =====
+// ===== Gemini 画像合成呼び出し（最終安定版）=====
 async function callGeminiImageCompose({ faceB64, modelB64, style, color }) {
   const prompt = [
     'ユーザーの顔写真をベースに、モデル写真の髪型を自然に合成してください。',
@@ -132,8 +132,8 @@ async function callGeminiImageCompose({ faceB64, modelB64, style, color }) {
     '出力は縦構図（3:4）で、スマホ向けに見やすく生成してください。'
   ].join(' ');
 
+  // ✅ v1 エンドポイント + あなたのプロジェクトで有効なモデル
   const url = 'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-preview-image:generateContent';
-
 
   const body = {
     contents: [{
@@ -143,7 +143,6 @@ async function callGeminiImageCompose({ faceB64, modelB64, style, color }) {
         { text: prompt }
       ]
     }]
-    // ❌ generationConfig は削除（テキストモデル専用）
   };
 
   const resp = await fetch(`${url}?key=${GEMINI_API_KEY}`, {
@@ -160,14 +159,17 @@ async function callGeminiImageCompose({ faceB64, modelB64, style, color }) {
 
   const data = await resp.json();
   const parts = data?.candidates?.[0]?.content?.parts || [];
+
+  // ✅ inline_data と fileData 両方対応
   const imagePart = parts.find(p => p.inline_data?.data || p.fileData?.data);
   if (!imagePart) {
     console.error('[Gemini response parse error]', JSON.stringify(data, null, 2));
     throw new Error('Geminiから画像データが返されませんでした。');
   }
+
+  // ✅ Base64画像データを返す
   return imagePart.inline_data?.data || imagePart.fileData.data;
 }
-
 
 
 
