@@ -129,7 +129,7 @@ async function callGeminiImageCompose({ faceB64, modelB64, style, color }) {
     style ? `髪型のカテゴリは「${style}」です。` : '',
     color ? `髪色は「${color}」で仕上げてください。` : '髪色は顔写真のままでもOKです。',
     '背景は残し、全体のトーンは明るめで自然に整えてください。',
-    '出力は縦構図で、スマホ向けの見やすいアスペクト比（3:4）を優先してください。'
+    '出力は縦構図（3:4）で、スマホ向けに見やすく生成してください。'
   ].join(' ');
 
   const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent';
@@ -142,12 +142,12 @@ async function callGeminiImageCompose({ faceB64, modelB64, style, color }) {
         { text: prompt }
       ]
     }],
-    generation_config: { response_mime_type: 'image/jpeg' }
+    generationConfig: { response_mime_type: 'image/jpeg' } // ← key名もキャメルケースに修正
   };
 
-  const resp = await fetch(`${url}?key=${encodeURIComponent(GEMINI_API_KEY)}`, {
+  const resp = await fetch(`${url}?key=${GEMINI_API_KEY}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
 
@@ -159,10 +159,14 @@ async function callGeminiImageCompose({ faceB64, modelB64, style, color }) {
 
   const data = await resp.json();
   const parts = data?.candidates?.[0]?.content?.parts || [];
-  const imagePart = parts.find(p => p.inlineData?.data);
-  if (!imagePart) throw new Error('No image data returned from Gemini.');
-  return imagePart.inlineData.data;
+  const imagePart = parts.find(p => p.inline_data?.data); // ←ここ修正
+  if (!imagePart) {
+    console.error('[Gemini response parse error]', JSON.stringify(data, null, 2));
+    throw new Error('No image data returned from Gemini.');
+  }
+  return imagePart.inline_data.data;
 }
+
 
 // ===== QuickReply 定義 =====
 const STYLE_QR = ['ショート', 'ボブ', 'ミディアム', 'ロング', 'ウルフ', 'メンズ', 'モデル写真を送る📸', '自由入力✍️'];
