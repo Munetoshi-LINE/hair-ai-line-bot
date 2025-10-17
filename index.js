@@ -141,8 +141,8 @@ async function callGeminiImageCompose({ faceB64, modelB64, style, color }) {
         ...(modelB64 ? [{ inline_data: { mime_type: 'image/jpeg', data: modelB64 } }] : []),
         { text: prompt }
       ]
-    }],
-    generationConfig: { response_mime_type: 'image/jpeg' } // ← key名もキャメルケースに修正
+    }]
+    // ❌ generationConfig は削除（テキストモデル専用）
   };
 
   const resp = await fetch(`${url}?key=${GEMINI_API_KEY}`, {
@@ -159,13 +159,14 @@ async function callGeminiImageCompose({ faceB64, modelB64, style, color }) {
 
   const data = await resp.json();
   const parts = data?.candidates?.[0]?.content?.parts || [];
-  const imagePart = parts.find(p => p.inline_data?.data); // ←ここ修正
+  const imagePart = parts.find(p => p.inline_data?.data);
   if (!imagePart) {
     console.error('[Gemini response parse error]', JSON.stringify(data, null, 2));
     throw new Error('No image data returned from Gemini.');
   }
   return imagePart.inline_data.data;
 }
+
 
 
 // ===== QuickReply 定義 =====
