@@ -30,7 +30,30 @@ const client = new line.Client(config);
 
 // ===== Express =====
 const app = express();
-app.use(express.json());
+// ===== Webhook受信（署名検証つき）=====
+app.post(
+  '/webhook',
+  express.raw({ type: '*/*' }), // ←ここ重要
+  (req, res, next) => {
+    try {
+      const signature = req.get('x-line-signature');
+      if (!line.validateSignature(req.body, LINE_CHANNEL_SECRET, signature)) {
+        console.error('❌ Invalid signature');
+        return res.status(403).send('Invalid signature');
+      }
+      // 検証OK → JSON化してイベント処理へ
+      req.body = JSON.parse(req.body.toString());
+      next();
+    } catch (err) {
+      console.error('Signature validation error:', err);
+      return res.status(500).send('Signature error');
+    }
+  },
+  async (req, res) => {
+    Promise.all(req.body.events.map(handleEvent)).catch(console.error);
+    res.status(200).end();
+  }
+);
 
 // 生成画像の一時公開用 (Renderの一時FS)
 // /tmp はサーバ再起動で消える想定。MVPではこれでOK。
