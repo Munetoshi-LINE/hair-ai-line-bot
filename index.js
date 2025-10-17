@@ -132,7 +132,8 @@ async function callGeminiImageCompose({ faceB64, modelB64, style, color }) {
     '出力は縦構図（3:4）で、スマホ向けに見やすく生成してください。'
   ].join(' ');
 
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-image:generateContent';
+  const url = 'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-preview-image:generateContent';
+
 
   const body = {
     contents: [{
