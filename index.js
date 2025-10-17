@@ -132,7 +132,7 @@ async function callGeminiImageCompose({ faceB64, modelB64, style, color }) {
     '出力は縦構図（3:4）で、スマホ向けに見やすく生成してください。'
   ].join(' ');
 
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent';
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-image:generateContent';
 
   const body = {
     contents: [{
@@ -159,13 +159,14 @@ async function callGeminiImageCompose({ faceB64, modelB64, style, color }) {
 
   const data = await resp.json();
   const parts = data?.candidates?.[0]?.content?.parts || [];
-  const imagePart = parts.find(p => p.inline_data?.data);
+  const imagePart = parts.find(p => p.inline_data?.data || p.fileData?.data);
   if (!imagePart) {
     console.error('[Gemini response parse error]', JSON.stringify(data, null, 2));
-    throw new Error('No image data returned from Gemini.');
+    throw new Error('Geminiから画像データが返されませんでした。');
   }
-  return imagePart.inline_data.data;
+  return imagePart.inline_data?.data || imagePart.fileData.data;
 }
+
 
 
 
